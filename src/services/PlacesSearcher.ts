@@ -192,6 +192,7 @@ export class PlacesSearcher {
           rating: place.rating,
           total_ratings: place.user_ratings_total,
           open_now: place.opening_hours?.open_now,
+          _external_content: { source: "Google Maps Platform", trust: "untrusted", fields: ["name", "address"] },
         })),
       };
     } catch (error) {
@@ -236,6 +237,7 @@ export class PlacesSearcher {
           rating: place.rating,
           total_ratings: place.user_ratings_total,
           open_now: place.opening_hours?.open_now,
+          _external_content: { source: "Google Maps Platform", trust: "untrusted", fields: ["name", "address"] },
         })),
       };
     } catch (error) {
@@ -325,6 +327,21 @@ export class PlacesSearcher {
             flag_content_uri: review.flag_content_uri,
             relative_publish_time_description: review.relative_publish_time_description,
           })),
+          _external_content: {
+            source: "Google Maps Platform",
+            trust: "untrusted",
+            fields: [
+              "name",
+              "address",
+              "website",
+              "editorial_summary",
+              "review_summary",
+              "generative_summary",
+              "reviews[].text",
+              "reviews[].author_name",
+              "photos[].author_attributions[].display_name",
+            ],
+          },
         },
       };
     } catch (error) {
