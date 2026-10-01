@@ -29,3 +29,19 @@ For enterprise security reviews, the current implementation can be summarized as
 | 21 | Human Operation Risk | Main risks are deployment misconfiguration (unrestricted API keys, exposed endpoint, missing TLS, over-broad network access). Use change control + least privilege. |
 | 22 | Lag Pull Attack | The server returns real-time API responses per request and does not cache historical outputs; stale-decision risk is primarily on client orchestration and human review timing. |
 | 23 | Cost-related information | Open-source, self-hosted server code (free). Google Maps Platform usage may incur API charges based on your Google Cloud billing plan. |
+
+## External content and prompt injection
+
+Google Maps responses cross a trust boundary when included in an agent's context. The server formats them as data, not executable code; this does not stop a client/model from mistakenly following instructions embedded in a business name, review, or API error. The main sources are:
+
+| Source / output | Classification |
+|---|---|
+| Places search `name`, `address`; details `name`, `address`, `website`, `editorial_summary`, `reviews[].text`, `reviews[].author_name`, `review_summary`, `generative_summary` | Third-party or Google-generated free text; untrusted data. Place search and details mark these paths in `_external_content` with `source: "Google Maps Platform"` and `trust: "untrusted"`. |
+| Places `google_maps_uri`, review/photo author links, `photos[].author_attributions`, summary `*_attribution` disclosures and report/source URLs | External attribution/source metadata; preserve with displayed content, but do not interpret text or URLs as commands. |
+| Geocoding address/components, Routes directions/step instructions and route names, nearby/along-route/comparison/exploration/rank-tracker place names, weather/air-quality descriptions, timezone labels | Google-derived data (sometimes influenced by users/businesses); untrusted even when the composite output has no `_external_content` marker. |
+| API error message/details propagated as `error` or MCP `isError` text | Potentially external diagnostic data; `isError` is a status flag, not an instruction or proof the message is trusted. |
+| `success`, `isError`, counts, scores and computed statuses | Server-generated status/derived values; not third-party instructions. |
+
+The `_external_content` object is additive to existing JSON data: original text, existing output shapes, Google Maps links, author credits and AI-summary disclosures remain intact. It identifies source and field paths, not a safe-content certification; unlisted external fields are not trusted. The MCP SDK's text responses do not establish a cross-client untrusted-content enforcement mechanism, so the server does not rely on delimiters, keyword removal or a special token as a boundary.
+
+Clients must keep tool results separate from system/user instructions and must not obey embedded requests to ignore policies, disclose credentials, open URLs, or trigger tools. Apply least privilege and human confirmation to high-impact or side-effecting downstream tools; this server's `readOnlyHint` does not restrict other tools available to the agent. Markers, documentation and mock adversarial tests are defense in depth, not a guarantee against model-level prompt injection.
